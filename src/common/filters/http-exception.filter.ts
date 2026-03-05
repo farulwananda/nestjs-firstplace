@@ -1,3 +1,7 @@
+/**
+ * Global exception filter.
+ * Menyamakan format error response dan mengirim log warning/error ke Winston.
+ */
 import {
   ExceptionFilter,
   Catch,
@@ -15,13 +19,17 @@ interface ExceptionResponseObject {
   error?: string;
 }
 
+// @Catch() tanpa argumen artinya menangkap semua exception yang tidak tertangani.
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  // Logger di-inject dari provider nest-winston.
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
+  // Method catch adalah entry point filter saat exception terjadi.
   catch(exception: unknown, host: ArgumentsHost): void {
+    // Ambil objek request/response dari konteks HTTP.
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -71,6 +79,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       });
     }
 
+    // Kirim response error dalam format yang konsisten.
     response.status(status).json(errorResponse);
   }
 }

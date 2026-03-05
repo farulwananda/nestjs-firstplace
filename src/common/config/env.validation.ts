@@ -1,3 +1,7 @@
+/**
+ * Validasi environment variables saat aplikasi startup.
+ * Jika ada env wajib yang salah/missing, app akan fail fast.
+ */
 import { plainToInstance } from 'class-transformer';
 import {
   IsEnum,
@@ -14,7 +18,9 @@ enum Environment {
   Test = 'test',
 }
 
+// Class ini dipakai class-validator sebagai schema validasi env.
 class EnvironmentVariables {
+  // NODE_ENV wajib salah satu dari enum Environment.
   @IsEnum(Environment)
   NODE_ENV: Environment = Environment.Development;
 
@@ -83,6 +89,8 @@ class EnvironmentVariables {
   GOOGLE_CALLBACK_URL?: string;
 }
 
+// Dipanggil otomatis oleh ConfigModule.forRoot({ validate }).
+// Jika ada error, throw agar aplikasi gagal start (fail fast).
 export function validate(
   config: Record<string, unknown>,
 ): EnvironmentVariables {

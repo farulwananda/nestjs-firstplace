@@ -1,3 +1,7 @@
+/**
+ * Root module aplikasi.
+ * Semua module feature didaftarkan di sini agar bisa dipakai oleh Nest DI container.
+ */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -12,6 +16,9 @@ import { MailModule } from './mail/mail.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
+// @Module memberi tahu Nest metadata module:
+// imports untuk dependency module lain, controllers untuk layer HTTP,
+// providers untuk service yang dikelola DI container.
 @Module({
   imports: [
     // Environment configuration with validation

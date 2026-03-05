@@ -1,3 +1,11 @@
+/**
+ * Entry point aplikasi NestJS.
+ * File ini menjalankan proses bootstrap:
+ * - buat instance app
+ * - pasang middleware/guard global
+ * - aktifkan Swagger
+ * - listen ke port
+ */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, type LoggerService } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,7 +16,9 @@ import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
 
+// Fungsi bootstrap adalah lifecycle startup utama aplikasi NestJS.
 async function bootstrap() {
+  // NestFactory.create() membangun IoC container + module graph dari AppModule.
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
@@ -77,4 +87,5 @@ async function bootstrap() {
   );
 }
 
+// Menjalankan startup async tanpa top-level await.
 void bootstrap();

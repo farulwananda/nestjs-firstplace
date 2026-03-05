@@ -1,8 +1,13 @@
+/**
+ * Module fitur notes.
+ * Mendaftarkan controller + service untuk CRUD catatan user.
+ */
 import { Module } from '@nestjs/common';
 
 import { NotesController } from './notes.controller.js';
 import { NotesService } from './notes.service.js';
 
+// Module metadata untuk fitur notes.
 @Module({
   controllers: [NotesController],
   providers: [NotesService],

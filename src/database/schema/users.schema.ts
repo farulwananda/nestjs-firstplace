@@ -1,7 +1,13 @@
+/**
+ * Definisi tabel users (Drizzle schema).
+ * Menjadi sumber type-safe untuk operasi CRUD user.
+ */
 import { mysqlTable, varchar, timestamp } from 'drizzle-orm/mysql-core';
 import { v4 as uuidv4 } from 'uuid';
 
+// mysqlTable(...) mendefinisikan struktur tabel users secara deklaratif.
 export const users = mysqlTable('users', {
+  // $defaultFn dipanggil saat insert untuk generate id otomatis.
   id: varchar('id', { length: 36 })
     .$defaultFn(() => uuidv4())
     .primaryKey(),
@@ -14,5 +20,6 @@ export const users = mysqlTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
 });
 
+// Type helper select/insert agar service dapat typing otomatis dari schema.
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

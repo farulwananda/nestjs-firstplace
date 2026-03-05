@@ -1,3 +1,7 @@
+/**
+ * Layer HTTP untuk notes.
+ * Semua endpoint di sini dilindungi JwtAuthGuard dan meneruskan kerja ke NotesService.
+ */
 import {
   Controller,
   Get,
@@ -23,13 +27,19 @@ import { UpdateNoteDto } from './dto/update-note.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 
+// Swagger grouping untuk endpoint notes.
 @ApiTags('Notes')
+// Menandai endpoint ini butuh Authorization: Bearer.
 @ApiBearerAuth()
+// Semua method controller notes dilindungi JWT guard.
 @UseGuards(JwtAuthGuard)
+// Prefix route /notes.
 @Controller('notes')
 export class NotesController {
+  // Inject service logic notes.
   constructor(private readonly notesService: NotesService) {}
 
+  // POST /notes.
   @Post()
   @ApiOperation({ summary: 'Create a new note' })
   @ApiResponse({ status: 201, description: 'Note created successfully' })
@@ -40,6 +50,7 @@ export class NotesController {
     return this.notesService.create(userId, createNoteDto);
   }
 
+  // GET /notes?archived=true|false.
   @Get()
   @ApiOperation({ summary: 'Get all notes for the current user' })
   @ApiQuery({
@@ -53,11 +64,13 @@ export class NotesController {
     @CurrentUser('id') userId: string,
     @Query('archived') archived?: string,
   ) {
+    // Query string selalu string, jadi diubah manual ke boolean.
     const archivedBool =
       archived !== undefined ? archived === 'true' : undefined;
     return this.notesService.findAll(userId, archivedBool);
   }
 
+  // GET /notes/:id.
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific note by ID' })
   @ApiResponse({ status: 200, description: 'The note' })
@@ -70,6 +83,7 @@ export class NotesController {
     return this.notesService.findOne(userId, noteId);
   }
 
+  // PATCH /notes/:id.
   @Patch(':id')
   @ApiOperation({ summary: 'Update a note' })
   @ApiResponse({ status: 200, description: 'Note updated successfully' })
@@ -82,6 +96,7 @@ export class NotesController {
     return this.notesService.update(userId, noteId, updateNoteDto);
   }
 
+  // DELETE /notes/:id.
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a note' })
   @ApiResponse({ status: 200, description: 'Note deleted successfully' })

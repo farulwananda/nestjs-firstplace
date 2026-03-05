@@ -1,3 +1,8 @@
+/**
+ * Business logic notes:
+ * - create/list/detail/update/delete note
+ * - validasi ownership agar user hanya bisa akses note miliknya
+ */
 import {
   Injectable,
   Inject,
@@ -12,13 +17,16 @@ import * as schema from '../database/schema/index.js';
 import { CreateNoteDto } from './dto/create-note.dto.js';
 import { UpdateNoteDto } from './dto/update-note.dto.js';
 
+// Provider service untuk operasi notes.
 @Injectable()
 export class NotesService {
+  // Inject database provider via token DRIZZLE.
   constructor(
     @Inject(DRIZZLE)
     private readonly db: MySql2Database<typeof schema>,
   ) {}
 
+  // Create note baru milik user yang sedang login.
   async create(userId: string, createNoteDto: CreateNoteDto) {
     await this.db.insert(schema.notes).values({
       userId,
@@ -37,6 +45,7 @@ export class NotesService {
     return createdNotes[0];
   }
 
+  // Ambil list notes milik user, optional filter archived.
   async findAll(userId: string, archived?: boolean) {
     const conditions = [eq(schema.notes.userId, userId)];
 
@@ -51,6 +60,7 @@ export class NotesService {
       .orderBy(schema.notes.createdAt);
   }
 
+  // Ambil satu note + pastikan note tersebut milik user ini.
   async findOne(userId: string, noteId: string) {
     const foundNotes = await this.db
       .select()
@@ -71,6 +81,7 @@ export class NotesService {
     return note;
   }
 
+  // Update partial note jika user adalah pemilik.
   async update(userId: string, noteId: string, updateNoteDto: UpdateNoteDto) {
     // Verify ownership
     await this.findOne(userId, noteId);
@@ -95,6 +106,7 @@ export class NotesService {
     return this.findOne(userId, noteId);
   }
 
+  // Hapus note jika user adalah pemilik.
   async remove(userId: string, noteId: string) {
     // Verify ownership
     await this.findOne(userId, noteId);

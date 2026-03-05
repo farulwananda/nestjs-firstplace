@@ -1,8 +1,14 @@
+/**
+ * Konfigurasi Winston untuk NestJS:
+ * - console transport (dev/prod format berbeda)
+ * - file transport untuk error dan combined logs
+ */
 import { WinstonModuleOptions } from 'nest-winston';
 import * as winston from 'winston';
 
 const { combine, timestamp, printf, colorize, errors, json } = winston.format;
 
+// Format log yang mudah dibaca manusia saat development.
 const devFormat = combine(
   colorize({ all: true }),
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -14,8 +20,10 @@ const devFormat = combine(
   }),
 );
 
+// Format JSON terstruktur untuk production observability pipeline.
 const prodFormat = combine(timestamp(), errors({ stack: true }), json());
 
+// Opsi konfigurasi yang akan dipakai WinstonModule.forRoot(...).
 export const winstonConfig: WinstonModuleOptions = {
   transports: [
     new winston.transports.Console({

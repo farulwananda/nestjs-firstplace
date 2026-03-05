@@ -1,3 +1,7 @@
+/**
+ * DTO untuk payload registrasi user.
+ * Dipakai agar input register seragam dan tervalidasi.
+ */
 import {
   IsEmail,
   IsNotEmpty,
@@ -8,6 +12,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
+  // Email user yang akan dipakai sebagai credential login.
   @ApiProperty({
     example: 'user@example.com',
     description: 'User email address',
@@ -16,6 +21,7 @@ export class RegisterDto {
   @IsNotEmpty()
   email!: string;
 
+  // Password dibatasi min/max length untuk baseline security.
   @ApiProperty({
     example: 'StrongP@ss123',
     description: 'Password (min 8 characters)',
@@ -25,6 +31,7 @@ export class RegisterDto {
   @MaxLength(128, { message: 'Password must not exceed 128 characters' })
   password!: string;
 
+  // Nama profil user.
   @ApiProperty({ example: 'John Doe', description: 'User full name' })
   @IsString()
   @IsNotEmpty({ message: 'Name is required' })

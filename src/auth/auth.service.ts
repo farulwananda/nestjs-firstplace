@@ -1,3 +1,11 @@
+/**
+ * Business logic autentikasi:
+ * - register/login user lokal (email + password)
+ * - generate JWT
+ * - profile lookup
+ * - login/link akun Google
+ * - enqueue welcome email async
+ */
 import {
   Injectable,
   ConflictException,
@@ -16,18 +24,22 @@ import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { MailQueueService } from '../mail/mail-queue.service.js';
 
+// @Injectable membuat AuthService bisa dipakai lewat constructor injection.
 @Injectable()
 export class AuthService {
   private readonly SALT_ROUNDS = 12;
   private readonly logger = new Logger(AuthService.name);
 
+  // Constructor injection untuk dependency eksternal service ini.
   constructor(
+    // Token custom DRIZZLE dipakai untuk injeksi koneksi database.
     @Inject(DRIZZLE)
     private readonly db: MySql2Database<typeof schema>,
     private readonly jwtService: JwtService,
     private readonly mailQueueService: MailQueueService,
   ) {}
 
+  // Register user lokal: validasi unik email, hash password, simpan user, buat token.
   async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto;
 
@@ -63,6 +75,7 @@ export class AuthService {
 
     // Generate token
     const token = this.generateToken(user.id, user.email);
+    // Queue email dikirim async agar response register tetap cepat.
     void this.enqueueWelcomeEmail(user.email, user.name);
 
     return {
@@ -75,6 +88,7 @@ export class AuthService {
     };
   }
 
+  // Login user lokal: cari user, verifikasi password, lalu issue JWT.
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -117,6 +131,7 @@ export class AuthService {
     };
   }
 
+  // Ambil profil user yang sedang login berdasarkan userId dari token.
   async getProfile(userId: string) {
     const foundUsers = await this.db
       .select({
@@ -137,11 +152,14 @@ export class AuthService {
     return foundUsers[0];
   }
 
+  // Helper internal untuk menandatangani JWT dari payload user.
   private generateToken(userId: string, email: string): string {
     const payload = { sub: userId, email };
     return this.jwtService.sign(payload);
   }
 
+  // Workflow login Google:
+  // 1) cek googleId, 2) jika tidak ada cek email untuk linking, 3) kalau belum ada buat user baru.
   async findOrCreateByGoogle(profile: {
     googleId: string;
     email: string;
@@ -212,6 +230,7 @@ export class AuthService {
     };
   }
 
+  // Queue producer dibungkus try/catch agar kegagalan Redis tidak memblokir auth flow.
   private async enqueueWelcomeEmail(
     email: string,
     name: string,

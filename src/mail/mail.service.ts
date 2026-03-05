@@ -1,15 +1,21 @@
+/**
+ * Service pengiriman email via SMTP (Mailtrap).
+ * Dipanggil worker saat job email diproses.
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import nodemailer, { type Transporter } from 'nodemailer';
 
 import type { SendWelcomeEmailJob } from './interfaces/send-welcome-email-job.interface.js';
 
+// Service pengiriman SMTP.
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly transporter: Transporter | null;
   private readonly fromEmail: string;
 
+  // Constructor membaca konfigurasi SMTP dan membuat transporter jika kredensial lengkap.
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('MAILTRAP_HOST');
     const port = this.configService.get<number>('MAILTRAP_PORT') ?? 2525;
@@ -19,6 +25,7 @@ export class MailService {
     this.fromEmail =
       this.configService.get<string>('MAIL_FROM') ?? 'noreply@firstplace.local';
 
+    // Jika env belum lengkap, service tetap hidup tapi pengiriman email di-skip.
     if (!host || !user || !pass) {
       this.transporter = null;
       this.logger.warn(
@@ -27,6 +34,7 @@ export class MailService {
       return;
     }
 
+    // createTransport() adalah client SMTP yang dipakai untuk sendMail().
     this.transporter = nodemailer.createTransport({
       host,
       port,
@@ -35,6 +43,7 @@ export class MailService {
     });
   }
 
+  // Template-level method untuk welcome email.
   async sendWelcomeEmail(payload: SendWelcomeEmailJob): Promise<void> {
     await this.sendEmail({
       to: payload.to,
@@ -44,6 +53,7 @@ export class MailService {
     });
   }
 
+  // Low-level helper untuk kirim email generik.
   private async sendEmail(input: {
     to: string;
     subject: string;
