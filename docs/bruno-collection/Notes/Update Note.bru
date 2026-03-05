@@ -1,0 +1,23 @@
+meta {
+  name: Update Note
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/notes/{{noteId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "Updated Title",
+    "content": "Updated content",
+    "isArchived": false
+  }
+}

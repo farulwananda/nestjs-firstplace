@@ -86,6 +86,13 @@ export class AuthService {
 
     const user = foundUsers[0];
 
+    // Check if user has a password (might be Google-only account)
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'This account uses Google login. Please sign in with Google.',
+      );
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -111,6 +118,7 @@ export class AuthService {
         id: schema.users.id,
         email: schema.users.email,
         name: schema.users.name,
+        avatar: schema.users.avatar,
         createdAt: schema.users.createdAt,
       })
       .from(schema.users)
@@ -127,5 +135,74 @@ export class AuthService {
   private generateToken(userId: string, email: string): string {
     const payload = { sub: userId, email };
     return this.jwtService.sign(payload);
+  }
+
+  async findOrCreateByGoogle(profile: {
+    googleId: string;
+    email: string;
+    name: string;
+    avatar?: string;
+  }) {
+    // Check by Google ID first
+    const existingByGoogle = await this.db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.googleId, profile.googleId))
+      .limit(1);
+
+    if (existingByGoogle.length > 0) {
+      const user = existingByGoogle[0];
+      const token = this.generateToken(user.id, user.email);
+      return {
+        access_token: token,
+        user: { id: user.id, email: user.email, name: user.name },
+      };
+    }
+
+    // Check by email (user registered manually, now linking Google)
+    const existingByEmail = await this.db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, profile.email))
+      .limit(1);
+
+    if (existingByEmail.length > 0) {
+      // Link Google account to existing user
+      await this.db
+        .update(schema.users)
+        .set({
+          googleId: profile.googleId,
+          avatar: profile.avatar ?? existingByEmail[0].avatar,
+        })
+        .where(eq(schema.users.id, existingByEmail[0].id));
+
+      const user = existingByEmail[0];
+      const token = this.generateToken(user.id, user.email);
+      return {
+        access_token: token,
+        user: { id: user.id, email: user.email, name: user.name },
+      };
+    }
+
+    // Create new user from Google profile
+    await this.db.insert(schema.users).values({
+      email: profile.email,
+      name: profile.name,
+      googleId: profile.googleId,
+      avatar: profile.avatar,
+    });
+
+    const createdUsers = await this.db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.googleId, profile.googleId))
+      .limit(1);
+
+    const user = createdUsers[0];
+    const token = this.generateToken(user.id, user.email);
+    return {
+      access_token: token,
+      user: { id: user.id, email: user.email, name: user.name },
+    };
   }
 }

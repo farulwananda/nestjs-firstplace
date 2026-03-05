@@ -1,0 +1,18 @@
+meta {
+  name: Google OAuth Login
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/auth/google
+  body: none
+  auth: none
+}
+
+docs {
+  This endpoint redirects to Google OAuth consent screen.
+  After authentication, Google redirects to /auth/google/callback which returns a JWT token.
+  
+  Note: This is a browser-based flow. Open this URL in your browser for testing.
+}

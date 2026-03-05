@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -13,6 +14,8 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import type { Request } from 'express';
 
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
@@ -50,5 +53,22 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser('id') userId: string) {
     return this.authService.getProfile(userId);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Login with Google OAuth' })
+  @ApiResponse({ status: 302, description: 'Redirect to Google' })
+  googleLogin(): void {
+    // Passport redirects to Google consent screen
+    // Scope is configured in GoogleStrategy
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  @ApiResponse({ status: 200, description: 'OAuth login successful' })
+  googleCallback(@Req() req: Request) {
+    return req.user;
   }
 }

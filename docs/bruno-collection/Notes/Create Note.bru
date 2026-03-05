@@ -1,0 +1,28 @@
+meta {
+  name: Create Note
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/notes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "title": "My First Note",
+    "content": "This is the content of my note"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("noteId", res.body.data.id);
+  }
+}

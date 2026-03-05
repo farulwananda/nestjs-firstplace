@@ -4,7 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { MySql2Database } from 'drizzle-orm/mysql2';
 
 import { DRIZZLE } from '../database/database.module.js';
@@ -26,14 +26,15 @@ export class NotesService {
       content: createNoteDto.content ?? null,
     });
 
-    // Fetch the latest note for this user
-    const userNotes = await this.db
+    // Fetch only the latest created note (not all user notes)
+    const createdNotes = await this.db
       .select()
       .from(schema.notes)
       .where(eq(schema.notes.userId, userId))
-      .orderBy(schema.notes.createdAt);
+      .orderBy(desc(schema.notes.createdAt))
+      .limit(1);
 
-    return userNotes[userNotes.length - 1];
+    return createdNotes[0];
   }
 
   async findAll(userId: string, archived?: boolean) {

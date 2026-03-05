@@ -1,0 +1,15 @@
+meta {
+  name: Delete Note
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/notes/{{noteId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
