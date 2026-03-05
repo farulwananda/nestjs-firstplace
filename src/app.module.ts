@@ -8,6 +8,7 @@ import { winstonConfig } from './common/logger/winston.config.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { NotesModule } from './notes/notes.module.js';
+import { MailModule } from './mail/mail.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
@@ -37,6 +38,7 @@ import { AppService } from './app.service.js';
     DatabaseModule,
 
     // Feature modules
+    MailModule,
     AuthModule,
     NotesModule,
   ],

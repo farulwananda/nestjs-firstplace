@@ -35,6 +35,43 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  REDIS_URL?: string;
+
+  @IsString()
+  @MinLength(1)
+  REDIS_HOST: string = '127.0.0.1';
+
+  @IsNumber()
+  REDIS_PORT: number = 6379;
+
+  @IsNumber()
+  REDIS_DB: number = 0;
+
+  @IsString()
+  @IsOptional()
+  REDIS_PASSWORD?: string;
+
+  @IsString()
+  @MinLength(1)
+  MAILTRAP_HOST: string = 'sandbox.smtp.mailtrap.io';
+
+  @IsNumber()
+  MAILTRAP_PORT: number = 2525;
+
+  @IsString()
+  @IsOptional()
+  MAILTRAP_USER?: string;
+
+  @IsString()
+  @IsOptional()
+  MAILTRAP_PASSWORD?: string;
+
+  @IsString()
+  @MinLength(1)
+  MAIL_FROM: string = 'noreply@firstplace.local';
+
+  @IsString()
+  @IsOptional()
   GOOGLE_CLIENT_ID?: string;
 
   @IsString()

@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,15 +14,18 @@ import { DRIZZLE } from '../database/database.module.js';
 import * as schema from '../database/schema/index.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { MailQueueService } from '../mail/mail-queue.service.js';
 
 @Injectable()
 export class AuthService {
   private readonly SALT_ROUNDS = 12;
+  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     @Inject(DRIZZLE)
     private readonly db: MySql2Database<typeof schema>,
     private readonly jwtService: JwtService,
+    private readonly mailQueueService: MailQueueService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -59,6 +63,7 @@ export class AuthService {
 
     // Generate token
     const token = this.generateToken(user.id, user.email);
+    void this.enqueueWelcomeEmail(user.email, user.name);
 
     return {
       access_token: token,
@@ -200,9 +205,27 @@ export class AuthService {
 
     const user = createdUsers[0];
     const token = this.generateToken(user.id, user.email);
+    void this.enqueueWelcomeEmail(user.email, user.name);
     return {
       access_token: token,
       user: { id: user.id, email: user.email, name: user.name },
     };
+  }
+
+  private async enqueueWelcomeEmail(
+    email: string,
+    name: string,
+  ): Promise<void> {
+    try {
+      await this.mailQueueService.enqueueWelcomeEmail({
+        to: email,
+        name,
+      });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Failed to enqueue welcome email for ${email}: ${reason}`,
+      );
+    }
   }
 }

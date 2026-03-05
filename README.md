@@ -16,6 +16,8 @@ Production-grade REST API built with **NestJS**, **Drizzle ORM** (MySQL), **JWT 
 | Security   | Helmet + Throttler                  |
 | API Docs   | Swagger (OpenAPI)                   |
 | Hashing    | bcrypt                              |
+| Queue      | BullMQ (Redis-backed jobs)          |
+| Email      | Nodemailer + Mailtrap SMTP          |
 
 ---
 
@@ -25,6 +27,7 @@ Production-grade REST API built with **NestJS**, **Drizzle ORM** (MySQL), **JWT 
 
 - **Node.js** ≥ 18
 - **MySQL** ≥ 8.0
+- **Redis** ≥ 6.0
 - **npm** ≥ 9
 
 ### Installation
@@ -51,6 +54,14 @@ PORT=3000
 DATABASE_URL=mysql://root:password@localhost:3306/nestjs_firstplace
 JWT_SECRET=your-super-secret-key-min-32-chars
 JWT_EXPIRES_IN=7d
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_DB=0
+MAILTRAP_HOST=sandbox.smtp.mailtrap.io
+MAILTRAP_PORT=2525
+MAILTRAP_USER=your-mailtrap-user
+MAILTRAP_PASSWORD=your-mailtrap-password
+MAIL_FROM=noreply@firstplace.local
 ```
 
 > ⚠️ **IMPORTANT**: In production, use a strong random string for `JWT_SECRET` (at least 32 characters).
@@ -83,6 +94,20 @@ After starting, visit:
 
 - **API**: `http://localhost:3000/api/v1`
 - **Swagger Docs**: `http://localhost:3000/api/docs`
+
+### Queue & Email (BullMQ + Mailtrap)
+
+Welcome email is queued through BullMQ and processed asynchronously by a worker in the same NestJS app.
+
+```bash
+# Run Redis (example with Docker)
+docker run --name notes-redis -p 6379:6379 -d redis:7-alpine
+
+# Start app
+npm run start:dev
+```
+
+Then register a user via `POST /api/v1/auth/register`, and check Mailtrap inbox for the welcome email.
 
 ---
 
@@ -117,12 +142,19 @@ src/
 ├── auth/
 │   ├── auth.module.ts
 │   ├── auth.controller.ts              # POST register, POST login, GET profile
-│   ├── auth.service.ts                 # Business logic (bcrypt, JWT)
+│   ├── auth.service.ts                 # Business logic (bcrypt, JWT, queue welcome email)
 │   ├── dto/
 │   │   ├── register.dto.ts
 │   │   └── login.dto.ts
 │   └── strategies/
 │       └── jwt.strategy.ts             # Passport JWT strategy
+│
+├── mail/
+│   ├── mail.module.ts                  # Queue + worker wiring
+│   ├── mail-queue.service.ts           # Queue producer
+│   ├── mail.worker.ts                  # BullMQ worker/processor
+│   ├── mail.service.ts                 # Mailtrap SMTP sender
+│   └── mail-queue.config.ts            # Redis connection resolver
 │
 └── notes/
     ├── notes.module.ts
